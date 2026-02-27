@@ -24,4 +24,13 @@ const deleteRevision = async (req, res) => {
     }
 };
 
-module.exports = { getRevisions, deleteRevision };
+const clearAllHistory = async (req, res) => {
+    try {
+        await Revision.deleteMany({});
+        res.json({ message: 'All history cleared' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+module.exports = { getRevisions, deleteRevision, clearAllHistory };

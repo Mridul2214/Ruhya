@@ -68,6 +68,7 @@ const AdminDashboard = () => {
     const [editingService, setEditingService] = useState(null);
     const [addingTestimonial, setAddingTestimonial] = useState(false);
     const [editingTestimonial, setEditingTestimonial] = useState(null);
+    const [selectedRevision, setSelectedRevision] = useState(null);
 
     // Form states
     const [aboutForm, setAboutForm] = useState({ title: '', subtitle: '', body: '', imageUrl: '' });
@@ -151,6 +152,7 @@ const AdminDashboard = () => {
         setTestimonialForm({ name: '', service: '', text: '', imageUrl: '' });
         setImgFile(null);
         setImgPreview(null);
+        setSelectedRevision(null);
     };
 
     // --- ABOUT ACTIONS ---
@@ -297,6 +299,17 @@ const AdminDashboard = () => {
             toast.success('Testimonial deleted.');
         } catch (err) {
             toast.error('Delete failed.');
+        }
+    };
+
+    const handleClearHistory = async () => {
+        if (!window.confirm('Delete all history records? This action cannot be undone.')) return;
+        try {
+            await api.delete('/history/clear');
+            toast.success('History cleared.');
+            fetchHistory();
+        } catch (err) {
+            toast.error('Failed to clear history.');
         }
     };
 
@@ -569,7 +582,14 @@ const AdminDashboard = () => {
             <div className="admin-history-view">
                 <div className="preview-header">
                     <h3>Tracked Changes</h3>
-                    {!revisions?.length && <p className="hint-text">No history entries found.</p>}
+                    <div className="header-actions">
+                        {revisions?.length > 0 && (
+                            <button className="cms-delete-history-btn" onClick={handleClearHistory}>
+                                <Trash2 size={16} /> Clear All History
+                            </button>
+                        )}
+                        {!revisions?.length && <p className="hint-text">No history entries found.</p>}
+                    </div>
                 </div>
 
                 {revisions.length === 0 ? (
@@ -580,9 +600,9 @@ const AdminDashboard = () => {
                 ) : (
                     <div className="cms-history-timeline">
                         {revisions.map((rev) => (
-                            <div key={rev._id} className="history-item">
+                            <div key={rev._id} className="history-item" onClick={() => setSelectedRevision(rev)}>
                                 <div className="history-dot"></div>
-                                <div className="history-card">
+                                <div className="history-card clickable">
                                     <div className="history-meta">
                                         <span className="history-tag">{rev.section.toUpperCase()}</span>
                                         <span className="history-date">
@@ -606,6 +626,65 @@ const AdminDashboard = () => {
                         ))}
                     </div>
                 )}
+
+                <AnimatePresence>
+                    {selectedRevision && (
+                        <motion.div
+                            className="cms-modal-overlay"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSelectedRevision(null)}
+                        >
+                            <motion.div
+                                className="cms-modal detail-modal"
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="modal-header">
+                                    <div>
+                                        <h2>Revision Details</h2>
+                                        <p className="history-date">{new Date(selectedRevision.createdAt).toLocaleString()} • {selectedRevision.section.toUpperCase()}</p>
+                                    </div>
+                                    <button className="cms-close-btn" onClick={() => setSelectedRevision(null)}><X size={20} /></button>
+                                </div>
+                                <div className="modal-body history-full-detail">
+                                    <div className="detail-section">
+                                        <label>Title</label>
+                                        <div className="static-field">{selectedRevision.content?.title || 'Untitled'}</div>
+                                    </div>
+                                    {selectedRevision.content?.subtitle && (
+                                        <div className="detail-section">
+                                            <label>Subtitle / Tag</label>
+                                            <div className="static-field">{selectedRevision.content.subtitle}</div>
+                                        </div>
+                                    )}
+                                    <div className="detail-section">
+                                        <label>Content</label>
+                                        <div className="static-field content-text">
+                                            {selectedRevision.content?.body || selectedRevision.content?.description || 'No detailed content.'}
+                                        </div>
+                                    </div>
+                                    {selectedRevision.content?.imageUrl && (
+                                        <div className="detail-section">
+                                            <label>Included Image</label>
+                                            <img
+                                                src={getImageSrc(selectedRevision.content.imageUrl)}
+                                                alt="Revision"
+                                                className="revision-detail-img"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="modal-footer">
+                                    <button className="cms-cancel-btn" onClick={() => setSelectedRevision(null)}>Close</button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         );
     };
