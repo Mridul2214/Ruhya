@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import '../css/Services.css';
 import OfferingDetailModal from './OfferingDetailModal';
@@ -8,39 +8,69 @@ import service2 from '../../assets/50890a46240fc48c66bf9036bd63303afee0193c.png'
 import service3 from '../../assets/9e717de9d8db97563969ee01cf0d50526433651d.png';
 import service4 from '../../assets/1674709d7e2e3706185e5699932ba4a2ee107b43.png';
 
+const BACKEND_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+
+const defaultServices = [
+    {
+        id: 'family-constellation',
+        title: 'Family Constellation Therapy',
+        subtitle: 'Ancestral Healing',
+        image: service1
+    },
+    {
+        id: 'inner-child-healing',
+        title: 'Inner Child Healing',
+        subtitle: 'Emotional Restoration',
+        image: service2
+    },
+    {
+        id: 'transpersonal-hypnotherapy',
+        title: 'Transpersonal Hypnotherapy',
+        subtitle: 'Regression Therapy',
+        image: service3
+    },
+    {
+        id: 'holistic-healing',
+        title: 'Holistic Integrated Creative Arts Therapy',
+        subtitle: 'Personalized Healing',
+        image: service4
+    }
+];
+
 const Services = () => {
-    const services = [
-        {
-            id: 'family-constellation',
-            title: 'Family Constellation Therapy',
-            subtitle: 'Ancestral Healing',
-            image: service1
-        },
-        {
-            id: 'inner-child-healing',
-            title: 'Inner Child Healing',
-            subtitle: 'Break the Patterns',
-            image: service2
-        },
-        {
-            id: 'transpersonal-hypnotherapy',
-            title: 'Transpersonal Hypnotherapy',
-            subtitle: 'Regression Therapy',
-            image: service3
-        },
-        {
-            id: 'holistic-healing',
-            title: 'Holistic Integrated Creative Arts Therapy',
-            subtitle: 'Process-led Healing',
-            image: service4
-        }
-    ];
-
+    const [services, setServices] = useState(defaultServices);
+    const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedOfferingId, setSelectedOfferingId] = useState(null);
+    const [selectedService, setSelectedService] = useState(null);
 
-    const handleOpenModal = (id) => {
-        setSelectedOfferingId(id);
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/services`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        const mappedServices = data.map((service, index) => ({
+                            id: service._id,
+                            title: service.title,
+                            subtitle: service.subtitle,
+                            image: service.imageUrl ? `${BACKEND_URL}${service.imageUrl}` : defaultServices[index]?.image || defaultServices[0].image
+                        }));
+                        setServices(mappedServices);
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching services:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchServices();
+    }, []);
+
+    const handleOpenModal = (service) => {
+        setSelectedService(service);
         setIsModalOpen(true);
     };
 
@@ -58,13 +88,13 @@ const Services = () => {
             <div className="services-grid">
                 {services.map((service, index) => (
                     <motion.div
-                        key={index}
+                        key={service.id || index}
                         className="service-card"
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.6, delay: index * 0.2 }}
-                        onClick={() => handleOpenModal(service.id)}
+                        onClick={() => handleOpenModal(service)}
                         style={{ cursor: 'pointer' }}
                     >
                         <div className="oval-image-container">
@@ -79,7 +109,7 @@ const Services = () => {
             <OfferingDetailModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                offeringId={selectedOfferingId}
+                serviceData={selectedService}
             />
         </section >
     );

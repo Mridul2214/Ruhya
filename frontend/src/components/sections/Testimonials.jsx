@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
@@ -8,6 +8,39 @@ import '../css/Testimonials.css';
 import imgRectangle18 from "../../assets/d68b2f1d148172a6f22490a658ef2f976ac7d368.png";
 import imgRectangle17 from "../../assets/5e98859f89dfd1e6d64d53e934328a8aa61c9fed.png";
 import imgRectangle19 from "../../assets/1674709d7e2e3706185e5699932ba4a2ee107b43.png";
+
+const BACKEND_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+
+const defaultTestimonials = [
+    {
+        id: 1,
+        name: 'Client Name 1',
+        image: imgRectangle18,
+        text: 'Replace this with actual client testimonial. Share their transformation story, what they appreciated about your work, and how the healing sessions impacted their life. Keep it authentic and heartfelt.',
+        service: 'Inner Child Healing'
+    },
+    {
+        id: 2,
+        name: 'Client Name 2',
+        image: imgRectangle17,
+        text: 'Replace this with actual client testimonial. Share their transformation story, what they appreciated about your work, and how the healing sessions impacted their life. Keep it authentic and heartfelt.',
+        service: 'Family Constellation Therapy'
+    },
+    {
+        id: 3,
+        name: 'Client Name 3',
+        image: imgRectangle19,
+        text: 'Replace this with actual client testimonial. Share their transformation story, what they appreciated about your work, and how the healing sessions impacted their life. Keep it authentic and heartfelt.',
+        service: 'Holistic Healing Sessions'
+    },
+    {
+        id: 4,
+        name: 'Client Name 4',
+        image: imgRectangle18,
+        text: 'Add more testimonials as you receive them. Each testimonial helps build trust with potential clients and showcases the transformative power of your healing work.',
+        service: 'Reiki & Energy Healing'
+    }
+];
 
 // Section Reveal Animation Component
 function SectionReveal({ children, delay = 0 }) {
@@ -27,42 +60,42 @@ function SectionReveal({ children, delay = 0 }) {
 }
 
 const Testimonials = () => {
-    const testimonials = [
-        {
-            id: 1,
-            name: 'Client Name 1',
-            image: imgRectangle18,
-            text: 'Replace this with actual client testimonial. Share their transformation story, what they appreciated about your work, and how the healing sessions impacted their life. Keep it authentic and heartfelt.',
-            service: 'Inner Child Healing'
-        },
-        {
-            id: 2,
-            name: 'Client Name 2',
-            image: imgRectangle17,
-            text: 'Replace this with actual client testimonial. Share their transformation story, what they appreciated about your work, and how the healing sessions impacted their life. Keep it authentic and heartfelt.',
-            service: 'Family Constellation Therapy'
-        },
-        {
-            id: 3,
-            name: 'Client Name 3',
-            image: imgRectangle19,
-            text: 'Replace this with actual client testimonial. Share their transformation story, what they appreciated about your work, and how the healing sessions impacted their life. Keep it authentic and heartfelt.',
-            service: 'Holistic Healing Sessions'
-        },
-        {
-            id: 4,
-            name: 'Client Name 4',
-            image: imgRectangle18,
-            text: 'Add more testimonials as you receive them. Each testimonial helps build trust with potential clients and showcases the transformative power of your healing work.',
-            service: 'Reiki & Energy Healing'
-        }
-    ];
+    const [testimonials, setTestimonials] = useState(defaultTestimonials);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTestimonials = async () => {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/testimonials`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        const mappedTestimonials = data.map((testimonial, index) => ({
+                            id: testimonial._id,
+                            name: testimonial.name,
+                            service: testimonial.service,
+                            text: testimonial.text,
+                            image: testimonial.imageUrl ? `${BACKEND_URL}${testimonial.imageUrl}` : defaultTestimonials[index]?.image || defaultTestimonials[0].image
+                        }));
+                        // Merge: New ones from DB + Default ones
+                        setTestimonials([...mappedTestimonials, ...defaultTestimonials]);
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching testimonials:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchTestimonials();
+    }, []);
 
     const sliderSettings = {
         dots: true,
-        infinite: true,
+        infinite: testimonials.length > 1,
         speed: 600,
-        slidesToShow: 3,
+        slidesToShow: Math.min(testimonials.length, 3),
         slidesToScroll: 1,
         autoplay: true,
         autoplaySpeed: 5000,
@@ -72,9 +105,9 @@ const Testimonials = () => {
             {
                 breakpoint: 1024,
                 settings: {
-                    slidesToShow: 2,
+                    slidesToShow: Math.min(testimonials.length, 2),
                     slidesToScroll: 1,
-                    infinite: true,
+                    infinite: testimonials.length > 1,
                     dots: true
                 }
             },
@@ -88,8 +121,8 @@ const Testimonials = () => {
                 }
             }
         ],
-        useTransform: true, // Performance boost
-        accessibility: true, // ARIA support
+        useTransform: true,
+        accessibility: true,
         focusOnSelect: false
     };
 

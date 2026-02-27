@@ -3,7 +3,7 @@ import { motion, useInView } from 'framer-motion';
 import '../css/About.css';
 import imgProfile from '../../assets/927b46439c6a089ede1d1e33aed952de81476f46.png';
 
-const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const BACKEND_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
 // Section Reveal Animation Component
 function SectionReveal({ children, delay = 0 }) {

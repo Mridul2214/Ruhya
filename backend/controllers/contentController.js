@@ -1,4 +1,5 @@
 const Content = require('../models/Content');
+const Revision = require('../models/Revision');
 
 const getAllContent = async (req, res) => {
   try {
@@ -34,6 +35,16 @@ const updateSection = async (req, res) => {
       { title, subtitle, body, imageUrl },
       { new: true, runValidators: true, upsert: true }
     );
+
+    if (updatedContent) {
+      // Create a revision entry for history
+      await Revision.create({
+        section: section.toLowerCase(),
+        referenceId: updatedContent._id,
+        content: { title, subtitle, body, imageUrl },
+        updatedBy: 'Admin'
+      });
+    }
 
     if (!updatedContent) {
       return res.status(404).json({ message: 'Section not found' });
