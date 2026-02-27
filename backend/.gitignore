@@ -1,11 +1,6 @@
 # Dependencies
 node_modules/
 
-# Production Build
-dist/
-dist-ssr/
-build/
-
 # Secrets & Environment Variables
 .env
 .env.*
@@ -13,6 +8,10 @@ build/
 # Logs
 *.log
 npm-debug.log*
+
+# Local Uploads (Ignore files but keep directory)
+uploads/*
+!uploads/.gitkeep
 
 # OS & Editor Files
 .vscode/
